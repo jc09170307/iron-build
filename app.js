@@ -8,13 +8,14 @@
   var DOW3 = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   var HOLIDAYS = { '2026-12-25': 'Christmas Day', '2027-1-1': "New Year's Day" };
 
+  function blank() { return { unit: 'lb', logs: {}, done: {}, check: {}, notes: {}, core: {}, fuel: {}, targets: null, music: '' }; }
   var S = load();
   function load() {
     try {
       var o = JSON.parse(localStorage.getItem(KEY));
-      if (o && typeof o === 'object') return Object.assign({ unit: 'lb', logs: {}, done: {}, check: {}, notes: {}, core: {} }, o);
+      if (o && typeof o === 'object') return Object.assign(blank(), o);
     } catch (e) {}
-    return { unit: 'lb', logs: {}, done: {}, check: {}, notes: {}, core: {} };
+    return blank();
   }
   var saveTimer;
   function save() {
@@ -74,9 +75,8 @@
   var $app = document.getElementById('app');
 
   function nav(active) {
-    return '<nav aria-label="Main"><a href="#/" class="' + (active === 'home' ? 'on' : '') + '">Home</a>' +
-      '<a href="#/weeks" class="' + (active === 'weeks' ? 'on' : '') + '">Weeks</a>' +
-      '<a href="#/rules" class="' + (active === 'rules' ? 'on' : '') + '">Rules</a></nav>';
+    function a(h, id, l) { return '<a href="' + h + '" class="' + (active === id ? 'on' : '') + '">' + l + '</a>'; }
+    return '<nav aria-label="Main">' + a('#/', 'home', 'Home') + a('#/weeks', 'weeks', 'Weeks') + a('#/fuel', 'fuel', 'Fuel') + a('#/rules', 'rules', 'Rules') + '</nav>';
   }
 
   function vHome() {
@@ -104,6 +104,8 @@
       '<a class="card link" href="#/week/' + cw + '"><h3>THIS WEEK / W' + pad(cw) + '</h3><span class="meta">' + IB.phaseOf(cw).label + ' / ' + fmt(wd(cw).mon) + '</span></a>' +
       '<a class="card link" href="#/rules/cardio"><h3>CARDIO PLAN / TUE + THU</h3></a>' +
       '<a class="card link" href="#/rules"><h3>HOW TO LOG &amp; PROGRESS</h3></a>' +
+      '<a class="card link" href="#/fuel"><h3>FUEL / MEALS &amp; TARGETS</h3><span class="meta">EAT TO BUILD</span></a>' +
+      '<a class="card link" href="#/music"><h3>&#9835; GYM MUSIC</h3><span class="meta">SPOTIFY / YOUTUBE / YT MUSIC</span></a>' +
       '<h2 class="sub">THE WEEK</h2>' +
       '<div class="card" style="line-height:1.9;font-weight:800;font-size:14px">MON UPPER + CORE A<br>TUE EASY CARDIO<br>WED LEGS<br>THU EASY CARDIO<br>FRI BACK + CORE B<br>SAT BALLROOM / 2 HOURS<br>SUN REST &amp; RESET</div>' +
       nav('home');
@@ -143,6 +145,7 @@
     var h = '<a class="back" href="#/week/' + w + '">&lt; BACK TO THIS WEEK</a><p class="kicker">WEEK ' + pad(w) + ' / ' + fmtFull(D) + '</p><h1 class="big">' + FOCUS[day] + ' / LOG</h1>' +
       '<p class="small mute">Load: ' + unit + '. Reps: actual completed. For dumbbells, log one dumbbell.</p>';
     if (hol) h += '<div class="dateflag"><b>' + esc(hol) + '</b> falls on this session. Move it to a day that works (e.g. the day before) and log it here.</div>';
+    h += '<a class="btn" href="#/music" style="display:inline-block;margin:6px 0">&#9835; GYM MUSIC</a>';
     h += '<div class="warm"><b>WARM-UP</b>' + esc(info.warm) + '</div>';
     info.ex.forEach(function (e, i) {
       var k = w + '.' + day + '.' + i, L = S.logs[k] || { s: [] };
@@ -192,17 +195,19 @@
   function vReset(w) {
     if (!(w >= 1 && w <= 13)) return vWeeks();
     var c = S.check[w] || {}, D = wd(w);
-    function num(f, lab) { return '<label class="lbl" for="c-' + f + '">' + lab + '</label><input id="c-' + f + '" inputmode="numeric" data-act="check" data-f="' + f + '" value="' + esc(c[f] || '') + '">'; }
+    function num(f, lab) { return '<label class="lbl" for="c-' + f + '">' + lab + '</label><input id="c-' + f + '" inputmode="decimal" data-act="check" data-f="' + f + '" value="' + esc(c[f] || '') + '">'; }
     function scale(f, lab, from, to) {
       var b = '';
       for (var i = from; i <= to; i++) b += '<button data-act="scale" data-f="' + f + '" data-v="' + i + '" class="' + (String(c[f]) === String(i) ? 'on' : '') + '">' + i + '</button>';
       return '<span class="lbl">' + lab + '</span><div class="scale" role="group" aria-label="' + lab + '">' + b + '</div>';
     }
+    var bodyBlock = '<h2 class="sub lime">BODY / EVERY 4 WEEKS</h2><p class="mute small">Best in W1, W5, W9 and W13. Same time of day, same spot. Keep progress photos on your phone only.</p>' +
+      num('bw', 'BODYWEIGHT (' + S.unit.toUpperCase() + ')') + num('waist', 'WAIST (IN OR CM, STAY CONSISTENT)') + num('chest', 'CHEST') + num('arm', 'ARM, RELAXED');
     var h = '<a class="back" href="#/week/' + w + '">&lt; BACK TO THIS WEEK</a><p class="kicker">WEEK ' + pad(w) + ' / SUNDAY RESET / ' + fmt(D.sun) + '</p><h1 class="big">LOG THE WHOLE ATHLETE.</h1>' +
       '<p class="mute small">Quick check-in. Look for better strength, stamina and recovery together.</p>' +
       num('tue', 'TUESDAY CARDIO / MINUTES') + num('thu', 'THURSDAY CARDIO / MINUTES') + num('sat', 'SATURDAY / ACTIVE DANCE MINUTES') +
       scale('energy', 'DANCE ENERGY / 1 LOW - 5 HIGH', 1, 5) + scale('sore', 'LEG SORENESS / 0 NONE - 10 HIGH', 0, 10) +
-      '<label class="lbl" for="c-win">ONE WIN THIS WEEK</label><textarea id="c-win" data-act="check" data-f="win">' + esc(c.win || '') + '</textarea>' +
+      bodyBlock + '<label class="lbl" for="c-win">ONE WIN THIS WEEK</label><textarea id="c-win" data-act="check" data-f="win">' + esc(c.win || '') + '</textarea>' +
       '<label class="lbl" for="c-adj">ONE ADJUSTMENT FOR NEXT WEEK</label><textarea id="c-adj" data-act="check" data-f="adj">' + esc(c.adj || '') + '</textarea>' +
       '<p class="kicker" style="margin-top:22px">' + IB.phaseOf(w).tag + '</p>' +
       (w < 13 ? '<a class="cta" href="#/week/' + (w + 1) + '">OPEN NEXT WEEK</a>' : '<a class="cta" href="#/">CYCLE COMPLETE / HOME</a>');
@@ -229,6 +234,121 @@
     return h + nav('rules');
   }
 
+  /* ---------- fuel ---------- */
+  var fuelDate = null, mealCat = 'breakfast';
+  var CATS = ['breakfast', 'lunch', 'dinner', 'snacks'];
+  function dkey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function targets() {
+    var T = Object.assign({}, IBFOOD.DEFAULTS), o = S.targets || {};
+    if (o.kcal > 0) T.kcal = o.kcal;
+    if (o.protein > 0) T.protein = o.protein;
+    return T;
+  }
+  function avgWindow(from, to) {
+    var t = today(), v = [];
+    Object.keys(S.fuel).forEach(function (k) {
+      var e = S.fuel[k], w = parseFloat(e && e.w); if (!(w > 0)) return;
+      var q = k.split('-'), a = dayDiff(t, new Date(+q[0], +q[1] - 1, +q[2]));
+      if (a >= from && a <= to) v.push(w);
+    });
+    return v.length ? v.reduce(function (a, b) { return a + b; }, 0) / v.length : null;
+  }
+  function bar(val, goal) { return '<div class="bar"><i style="width:' + (goal > 0 ? Math.min(100, Math.round(val / goal * 100)) : 0) + '%"></i></div>'; }
+  function fuelKey() { var el = document.getElementById('fd'); return (el && el.value) || fuelDate || dkey(today()); }
+  function fuelMacros() {
+    var T = targets(), fat = Math.round(T.kcal * 0.28 / 9), carb = Math.max(0, Math.round((T.kcal - T.protein * 4 - fat * 9) / 4));
+    return '<span class="meta">DAILY MACROS</span><p style="margin:6px 0 0"><b>' + T.protein + ' g</b> protein / about <b>' + fat + ' g</b> fat / about <b>' + carb + ' g</b> carbs</p>' +
+      '<p class="mute small" style="margin:6px 0 0">Fat is about 28% of calories. Carbs fill the rest and fuel your lifting and dancing.</p>';
+  }
+  function fuelBars(key) {
+    var T = targets(), d = S.fuel[key] || {}, k = parseFloat(d.kcal) || 0, p = parseFloat(d.p) || 0;
+    return '<div class="row small"><b>CALORIES</b><span>' + k + ' / ' + T.kcal + '</span></div>' + bar(k, T.kcal) +
+      '<div class="row small" style="margin-top:8px"><b>PROTEIN</b><span>' + p + ' / ' + T.protein + ' g</span></div>' + bar(p, T.protein);
+  }
+  function fuelTrend() {
+    var f = S.unit === 'kg' ? 0.4536 : 1, cur = avgWindow(0, 6), prev = avgWindow(7, 13);
+    if (cur == null) return '<p class="mute small" style="margin:0">Log your weight on a few mornings to see your 7-day average.</p>';
+    var h = '<p style="margin:0"><b>7-day average: ' + cur.toFixed(1) + ' ' + S.unit + '</b></p>';
+    if (prev == null) return h + '<p class="mute small" style="margin:6px 0 0">Keep logging. After 2 weeks you will see your weekly change. Goal: +0.25 to +0.5 lb per week.</p>';
+    var d = (cur - prev) / f, msg;
+    if (d < 0.15) msg = 'Flat or down. If this holds for 2+ weeks, add 150-200 calories a day.';
+    else if (d <= 0.6) msg = 'On target. Keep going.';
+    else msg = 'Gaining faster than planned. Trim 100-200 calories a day.';
+    return h + '<p style="margin:6px 0 0">Change vs the week before: <b>' + (d >= 0 ? '+' : '') + (d * f).toFixed(1) + ' ' + S.unit + '</b>. ' + msg + '</p>';
+  }
+  function mealCard(m) {
+    return '<details class="meal"><summary><span class="mn">' + esc(m.name) + '</span><span class="mm">' + m.kcal + ' kcal / P ' + m.p + ' / C ' + m.c + ' / F ' + m.f + '</span></summary>' +
+      '<p class="meta" style="margin:10px 0 4px">INGREDIENTS / ' + esc(m.time).toUpperCase() + '</p><ul>' + m.ing.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul>' +
+      '<p class="meta" style="margin:10px 0 4px">STEPS</p><ol>' + m.steps.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ol></details>';
+  }
+  function vFuel() {
+    var key = fuelDate || dkey(today()), d = S.fuel[key] || {}, T = targets(), byId = {};
+    IBFOOD.MEALS.forEach(function (m) { byId[m.id] = m; });
+    var tot = { kcal: 0, p: 0, c: 0, f: 0 }, rows = '';
+    IBFOOD.SAMPLE_DAY.forEach(function (r) {
+      var m = byId[r[1]]; ['kcal', 'p', 'c', 'f'].forEach(function (k) { tot[k] += m[k]; });
+      rows += '<div class="row small" style="padding:5px 0;align-items:flex-start"><span><b>' + r[0] + '</b> / ' + esc(m.name) + '</span><span class="mute">' + m.kcal + '</span></div>';
+    });
+    var h = '<p class="kicker">FUEL</p><h1 class="big">EAT TO BUILD.</h1>' +
+      '<p class="lead">Lean bulk: a small calorie surplus so you gain muscle slowly with little extra fat.</p>' +
+      '<h2 class="sub lime">YOUR TARGETS</h2><div class="card"><div class="grid"><div><label class="lbl" style="margin-top:0" for="tk">CALORIES / DAY</label><input id="tk" inputmode="numeric" data-act="target" data-f="kcal" value="' + (S.targets && S.targets.kcal > 0 ? S.targets.kcal : '') + '" placeholder="' + IBFOOD.DEFAULTS.kcal + '"></div>' +
+      '<div><label class="lbl" style="margin-top:0" for="tp">PROTEIN (G)</label><input id="tp" inputmode="numeric" data-act="target" data-f="protein" value="' + (S.targets && S.targets.protein > 0 ? S.targets.protein : '') + '" placeholder="' + IBFOOD.DEFAULTS.protein + '"></div></div>' +
+      '<div id="fuelmacros" style="margin-top:14px">' + fuelMacros() + '</div></div>' +
+      '<h2 class="sub lime">DAILY LOG</h2><div class="card"><label class="lbl" style="margin-top:0" for="fd">DATE</label><input id="fd" type="date" data-act="fuel-date" value="' + key + '" max="' + dkey(today()) + '">' +
+      '<div class="grid"><div><label class="lbl" for="fw">WEIGHT (' + S.unit.toUpperCase() + ')</label><input id="fw" inputmode="decimal" data-act="fuel" data-f="w" value="' + esc(d.w || '') + '"></div>' +
+      '<div><label class="lbl" for="fk">CALORIES</label><input id="fk" inputmode="numeric" data-act="fuel" data-f="kcal" value="' + esc(d.kcal || '') + '"></div></div>' +
+      '<label class="lbl" for="fp">PROTEIN (G)</label><input id="fp" inputmode="numeric" data-act="fuel" data-f="p" value="' + esc(d.p || '') + '">' +
+      '<div id="fuelbars" style="margin-top:14px">' + fuelBars(key) + '</div></div>' +
+      '<div class="card"><span class="meta">WEEKLY TREND</span><div id="fueltrend" style="margin-top:8px">' + fuelTrend() + '</div><p class="mute small" style="margin:10px 0 0">Weigh yourself first thing in the morning. Judge by the weekly average, not single days.</p></div>' +
+      '<h2 class="sub lime">A SAMPLE DAY</h2><div class="card">' + rows +
+      '<div class="row" style="border-top:1px solid var(--limedim);margin-top:8px;padding-top:10px"><b>TOTAL</b><b>' + tot.kcal + ' kcal / P ' + tot.p + ' / C ' + tot.c + ' / F ' + tot.f + '</b></div></div>' +
+      '<h2 class="sub lime">MEAL IDEAS</h2><div class="chip-row">' +
+      CATS.map(function (c) { return '<button class="btn ' + (c === mealCat ? 'solid' : '') + '" data-act="cat" data-v="' + c + '">' + c + '</button>'; }).join('') + '</div>' +
+      IBFOOD.MEALS.filter(function (m) { return m.cat === mealCat; }).map(mealCard).join('') +
+      '<p class="mute small" style="margin-top:14px">Calories and macros are estimates (about plus or minus 10-15%). Brands, cuts and portions vary. Mix and match to land near your targets. Optional whey protein powder can replace or add to any meal.</p>';
+    return h + nav('fuel');
+  }
+
+  /* ---------- music ---------- */
+  function parseMusic(raw) {
+    raw = (raw || '').trim(); if (!raw) return null;
+    var m = raw.match(/^spotify:(playlist|album|track|artist|show|episode):([A-Za-z0-9]+)$/), u;
+    function sp(t, id) { return { kind: 'Spotify', embed: 'https://open.spotify.com/embed/' + t + '/' + id, url: 'https://open.spotify.com/' + t + '/' + id, cls: (t === 'track' || t === 'episode') ? 'sps' : 'sp' }; }
+    if (m) return sp(m[1], m[2]);
+    try { u = new URL(raw); } catch (e) { return null; }
+    if (u.protocol !== 'https:') return null;
+    var h = u.hostname.replace(/^www\./, '');
+    if (h === 'open.spotify.com') {
+      m = u.pathname.match(/^\/(?:intl-[a-z-]+\/)?(playlist|album|track|artist|show|episode)\/([A-Za-z0-9]+)/);
+      return m ? sp(m[1], m[2]) : null;
+    }
+    if (h === 'youtube.com' || h === 'm.youtube.com' || h === 'music.youtube.com' || h === 'youtu.be') {
+      var list = u.searchParams.get('list'), v = h === 'youtu.be' ? u.pathname.slice(1) : u.searchParams.get('v');
+      var music = h === 'music.youtube.com';
+      if (list && /^[A-Za-z0-9_-]{10,64}$/.test(list)) return { kind: music ? 'YouTube Music' : 'YouTube', embed: 'https://www.youtube.com/embed/videoseries?list=' + list, url: (music ? 'https://music.youtube.com' : 'https://www.youtube.com') + '/playlist?list=' + list, cls: 'yt' };
+      if (v && /^[A-Za-z0-9_-]{6,20}$/.test(v)) return { kind: music ? 'YouTube Music' : 'YouTube', embed: 'https://www.youtube.com/embed/' + v, url: (music ? 'https://music.youtube.com' : 'https://www.youtube.com') + '/watch?v=' + v, cls: 'yt' };
+    }
+    return null;
+  }
+  function vMusic() {
+    var m = parseMusic(S.music);
+    var h = '<a class="back" href="#/">&lt; HOME</a><p class="kicker">GYM MUSIC</p><h1 class="big">PRESS PLAY.</h1>' +
+      '<p class="mute small">Paste a link to any Spotify, YouTube or YouTube Music playlist. It plays right here, or open it in its own app so the music keeps going while you log sets.</p>' +
+      '<label class="lbl" for="mlink">PLAYLIST LINK</label><input id="mlink" type="url" inputmode="url" autocomplete="off" autocapitalize="off" placeholder="https://open.spotify.com/playlist/..." value="' + esc(S.music) + '">' +
+      '<div class="chip-row" style="margin-top:10px"><button class="btn solid" data-act="music-save">SAVE &amp; LOAD</button>' + (S.music ? '<button class="btn" data-act="music-clear">REMOVE</button>' : '') + '</div>';
+    if (m) {
+      h += '<iframe class="player ' + m.cls + '" src="' + esc(m.embed) + '" title="' + m.kind + ' player" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>' +
+        '<a class="cta" href="' + esc(m.url) + '" target="_blank" rel="noopener">OPEN IN ' + m.kind.toUpperCase() + '<small>Opens the app or site so playback continues in the background.</small></a>';
+    }
+    h += '<h2 class="sub lime">FIND A PLAYLIST</h2>' +
+      '<a class="btn block" target="_blank" rel="noopener" href="https://open.spotify.com/search/gym%20workout">SPOTIFY / GYM WORKOUT</a>' +
+      '<a class="btn block" target="_blank" rel="noopener" href="https://music.youtube.com/search?q=gym+workout+playlist">YOUTUBE MUSIC / GYM WORKOUT</a>' +
+      '<a class="btn block" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=gym+workout+music+playlist">YOUTUBE / GYM WORKOUT MIX</a>' +
+      '<a class="btn block" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=ballroom+practice+music+playlist">YOUTUBE / BALLROOM PRACTICE MIX</a>' +
+      '<p class="mute small" style="margin-top:14px">Find one you like, copy its share link, and paste it above. Players need an internet connection. Spotify plays full tracks if you are signed in to Spotify in this browser, and may otherwise play short previews. This app cannot sign in to your accounts.</p>';
+    return h + nav('home');
+  }
+
   /* ---------- router ---------- */
   function route() {
     var p = (location.hash || '#/').replace(/^#\/?/, '').split('/'), html;
@@ -238,6 +358,8 @@
       case 'log': html = vLog(+p[1], p[2]); break;
       case 'reset': html = vReset(+p[1]); break;
       case 'rules': html = vRules(p[1]); break;
+      case 'fuel': html = vFuel(); break;
+      case 'music': html = vMusic(); break;
       default: html = vHome();
     }
     $app.innerHTML = html;
@@ -321,7 +443,7 @@
       a.href = URL.createObjectURL(blob); a.download = 'iron-build-backup-' + new Date().toISOString().slice(0, 10) + '.json'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
     } else if (act === 'import') document.getElementById('imp').click();
     else if (act === 'reset') {
-      if (confirm('Erase ALL logs, check-ins and progress on this device? This cannot be undone.')) { S = { unit: S.unit, logs: {}, done: {}, check: {}, notes: {}, core: {} }; saveNow(); route(); toast('Erased.'); }
+      if (confirm('Erase ALL logs, check-ins and progress on this device? This cannot be undone.')) { S = Object.assign(blank(), { unit: S.unit }); saveNow(); route(); toast('Erased.'); }
     }
   });
   $app.addEventListener('change', function (e) {
@@ -331,10 +453,34 @@
       try {
         var o = JSON.parse(fr.result);
         if (!o || typeof o.logs !== 'object') throw new Error('bad');
-        S = Object.assign({ unit: 'lb', logs: {}, done: {}, check: {}, notes: {}, core: {} }, o); saveNow(); route(); toast('Backup imported.');
+        S = Object.assign(blank(), o); saveNow(); route(); toast('Backup imported.');
       } catch (err) { toast('That file is not an Iron Build backup.'); }
     };
     fr.readAsText(e.target.files[0]);
+  });
+  $app.addEventListener('input', function (e) {
+    var t = e.target, act = t.getAttribute('data-act');
+    if (act === 'fuel') {
+      var k = fuelKey(); S.fuel[k] = S.fuel[k] || {}; S.fuel[k][t.getAttribute('data-f')] = t.value.trim(); save();
+      document.getElementById('fuelbars').innerHTML = fuelBars(k); document.getElementById('fueltrend').innerHTML = fuelTrend();
+    } else if (act === 'target') {
+      var n = parseFloat(t.value); S.targets = S.targets || {}; var f = t.getAttribute('data-f');
+      if (n > 0) S.targets[f] = n; else delete S.targets[f];
+      save(); document.getElementById('fuelmacros').innerHTML = fuelMacros(); document.getElementById('fuelbars').innerHTML = fuelBars(fuelKey());
+    }
+  });
+  $app.addEventListener('change', function (e) {
+    if (e.target.getAttribute('data-act') === 'fuel-date') { fuelDate = e.target.value || null; route(); }
+  });
+  $app.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]'); if (!b) return;
+    var act = b.getAttribute('data-act');
+    if (act === 'cat') { mealCat = b.getAttribute('data-v'); route(); }
+    else if (act === 'music-save') {
+      var v = document.getElementById('mlink').value;
+      if (!parseMusic(v)) { toast('Paste a Spotify, YouTube or YouTube Music link.'); return; }
+      S.music = v.trim(); saveNow(); route();
+    } else if (act === 'music-clear') { S.music = ''; saveNow(); route(); }
   });
   window.addEventListener('pagehide', saveNow);
   document.addEventListener('visibilitychange', function () { if (document.hidden) saveNow(); });

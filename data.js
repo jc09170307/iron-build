@@ -23,7 +23,10 @@
     'Barbell back squat': 'Brace before each rep and use a controlled, comfortable depth.',
     'Bulgarian split squat': 'Keep the front foot stable; control depth and balance.',
     'Assisted pull-ups': 'Choose enough assistance to move smoothly without swinging.',
-    'Leg extension': 'Extend smoothly; lower slowly and avoid kicking the stack.'
+    'Leg extension': 'Extend smoothly; lower slowly and avoid kicking the stack.',
+    'Dumbbell lateral raise': 'Lead with your elbows, raise to about shoulder height, lower slowly. Keep the weight light.',
+    'Seated leg curl': 'Keep hips pinned to the seat; squeeze briefly, then lower with control.',
+    'Cable face pull': 'Rope at upper-chest height. Pull toward your face with elbows high and squeeze your shoulder blades.'
   };
   var DEFAULT_CUE = 'Use a controlled range and steady technique. Watch the demo before your first set.';
 
@@ -46,32 +49,32 @@
     { id: 1, name: 'FOUNDATION', label: 'PHASE 1 / FOUNDATION', weeks: [1, 3], tag: 'OWN THE REP. BUILD THE HABIT.',
       mon: { warm: 'Knee push-up: 4 / 8 / 10 reps', ex: [
         ex('Push-up on knees', 3, 12, 'S'), ex('Dumbbell incline bench press', 3, 8), ex('Dumbbell incline fly', 3, 10, 'S'),
-        ex('Dumbbell seated shoulder press', 4, 8), ex('Bench dips', 4, 12) ] },
+        ex('Dumbbell seated shoulder press', 4, 8), ex('Dumbbell lateral raise', 3, 12, 'S'), ex('Bench dips', 4, 12) ] },
       wed: { warm: 'Bodyweight squat x 15 / box squat 25% x 12 / 50% x 10', ex: [
         ex('Dumbbell box squat', 3, 8), ex('Kettlebell deadlift', 3, 8), ex('Alternating dumbbell lunge', 3, 10),
-        ex('Barbell hip thrust', 4, 8), ex('Machine calf raise', 4, 12, 'S') ] },
+        ex('Barbell hip thrust', 4, 8), ex('Seated leg curl', 3, 12, 'S'), ex('Machine calf raise', 4, 12, 'S') ] },
       fri: { warm: 'Lat pulldown: 25% x 15 / 50% x 12 / 75% x 10', ex: [
-        ex('Lat pulldown', 3, 8), ex('Seated cable row', 3, 8), ex('Cable upright row', 3, 10),
+        ex('Lat pulldown', 3, 8), ex('Seated cable row', 3, 8), ex('Cable face pull', 3, 15),
         ex('Dumbbell rear fly', 4, 8, 'S'), ex('Dumbbell hammer curls', 4, 12, 'S') ] } },
     { id: 2, name: 'POWER UP', label: 'PHASE 2 / POWER UP', weeks: [4, 6], tag: 'SMALL WINS. REPEATED.',
       mon: { warm: 'Knee push-up: 3 / 5 reps, then machine chest-press ramp sets', ex: [
         ex('Machine chest press', 3, 10), ex('Dumbbell incline bench press', 3, 10), ex('Standing chest cable flys', 3, 12, 'S'),
-        ex('Barbell military press', 4, 10), ex('Band-assisted dips', 4, 10) ] },
+        ex('Barbell military press', 4, 10), ex('Dumbbell lateral raise', 3, 12, 'S'), ex('Band-assisted dips', 4, 10) ] },
       wed: { warm: 'Bodyweight squat x 15 / bar-only back squat x 12 / 50% x 10', ex: [
         ex('Dumbbell back squat', 3, 10), ex('Romanian deadlift', 3, 10), ex('Alternating dumbbell step-up', 3, 12),
-        ex('Barbell hip thrust', 4, 10), ex('Machine calf raise', 4, 12, 'S') ] },
+        ex('Barbell hip thrust', 4, 10), ex('Seated leg curl', 3, 12, 'S'), ex('Machine calf raise', 4, 12, 'S') ] },
       fri: { warm: 'Lat pulldown: 25% x 15 / 50% x 12 / 75% x 10', ex: [
-        ex('Lat pulldown', 3, 10), ex('Dumbbell chest-supported row', 3, 10), ex('Dumbbell incline upright row', 3, 12),
+        ex('Lat pulldown', 3, 10), ex('Dumbbell chest-supported row', 3, 10), ex('Cable face pull', 3, 15),
         ex('Standing cable pullover', 4, 10, 'S'), ex('Standing cable curl', 4, 12, 'S') ] } },
     { id: 3, name: 'EXPANSION', label: 'PHASE 3 / EXPANSION', weeks: [7, 9], tag: 'STRONG IN THE GYM. LIGHT ON YOUR FEET.',
       mon: { warm: 'Knee push-up: 3 / 5 reps, then flat-bench ramp sets', ex: [
         ex('Barbell flat bench press', 4, 10), ex('Barbell incline bench press', 4, 10), ex('Dumbbell single-arm shoulder press', 4, 10, 'L', true),
-        ex('Dips', 4, 7), ex('Standing chest cable flys', 4, 12, 'S') ] },
+        ex('Dumbbell lateral raise', 3, 12, 'S'), ex('Dips', 4, 7), ex('Standing chest cable flys', 4, 12, 'S') ] },
       wed: { warm: 'Bodyweight squat x 15 / back squat 25% x 12 / 50% x 10', ex: [
         ex('Barbell back squat', 4, 10), ex('Romanian deadlift', 4, 10), ex('Bulgarian split squat', 3, 10, 'L', true),
-        ex('Barbell hip thrust', 4, 10), ex('Machine calf raise', 4, 12, 'S') ] },
+        ex('Barbell hip thrust', 4, 10), ex('Seated leg curl', 3, 12, 'S'), ex('Machine calf raise', 4, 12, 'S') ] },
       fri: { warm: 'Lat pulldown: 25% x 15 / 50% x 12 / 75% x 10', ex: [
-        ex('Assisted pull-ups', 4, 7), ex('Dumbbell single-arm row', 4, 10, 'L', true), ex('Barbell upright row', 4, 10),
+        ex('Assisted pull-ups', 4, 7), ex('Dumbbell single-arm row', 4, 10, 'L', true), ex('Cable face pull', 4, 15),
         ex('Lat pulldown', 4, 10), ex('Standing dumbbell curl', 4, 12, 'S') ] } },
     { id: 4, name: 'MAX VOLUME', label: 'PHASE 4 / MAX VOLUME', weeks: [10, 12], tag: 'BUILD THE BODY. KEEP THE RHYTHM.',
       mon: { warm: 'Knee push-up, then machine chest press at 25% and 50%', ex: [
@@ -79,9 +82,9 @@
         ex('Dumbbell seated Arnold press', 4, 10), ex('Dumbbell lateral raise', 4, 8, 'S'), ex('Dumbbell kickbacks', 4, 10, 'S') ] },
       wed: { warm: 'Bodyweight squat x 15 / back squat 25% x 12 / 50% x 10', ex: [
         ex('Barbell back squat', 4, 12), ex('Barbell hip thrust', 4, 12), ex('Bulgarian split squat', 3, 12, 'L', true),
-        ex('Leg extension', 3, 12, 'S'), ex('Machine calf raise', 3, 12, 'S') ] },
+        ex('Leg extension', 3, 12, 'S'), ex('Seated leg curl', 3, 12, 'S'), ex('Machine calf raise', 3, 12, 'S') ] },
       fri: { warm: 'Lat pulldown: 25% x 15 / 50% x 12 / 75% x 10', ex: [
-        ex('Assisted pull-ups', 4, 8), ex('Dumbbell chest-supported row', 4, 12), ex('Cable upright row', 4, 12),
+        ex('Assisted pull-ups', 4, 8), ex('Dumbbell chest-supported row', 4, 12), ex('Cable face pull', 4, 15),
         ex('Standing dumbbell curl', 4, 8, 'S'), ex('Dumbbell hammer curls', 4, 8, 'S') ] } }
   ];
 
