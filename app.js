@@ -8,7 +8,7 @@
   var DOW3 = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   var HOLIDAYS = { '2026-12-25': 'Christmas Day', '2027-1-1': "New Year's Day" };
 
-  function blank() { return { unit: 'lb', logs: {}, done: {}, check: {}, notes: {}, core: {}, fuel: {}, targets: null, music: '' }; }
+  function blank() { return { unit: 'lb', logs: {}, done: {}, check: {}, notes: {}, core: {}, fuel: {}, targets: null, music: '', moves: {} }; }
   var S = load();
   function load() {
     try {
@@ -32,6 +32,11 @@
   function today() { return sod(new Date()); }
   function dayDiff(a, b) { return Math.round((sod(a) - sod(b)) / 86400000); }
   function wd(w) { return IB.weekDates(w); }
+  function sd(w, d) {
+    var m = S.moves && S.moves[w + '.' + d];
+    if (m && /^\d{4}-\d{2}-\d{2}$/.test(m)) { var q = m.split('-'); return new Date(+q[0], +q[1] - 1, +q[2]); }
+    return wd(w)[d];
+  }
   function holiday(d) { return HOLIDAYS[d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate()]; }
   function howUrl(name) { return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(name + ' proper form'); }
 
@@ -49,7 +54,7 @@
       var d = DAYS[i];
       if (isDone(w, d)) continue;
       if (!first) first = { w: w, d: d };
-      if (dayDiff(wd(w)[d], t) >= 0) return { w: w, d: d };
+      if (dayDiff(sd(w, d), t) >= 0) return { w: w, d: d };
     }
     return first;
   }
@@ -88,7 +93,7 @@
     } else {
       var info = IB.workout(ns.w, ns.d);
       var label = done === 0 ? 'START WEEK 1 / 05 OCT' : 'NEXT / ' + DAYNAME[ns.d] + ' ' + FOCUS[ns.d];
-      cta = '<a class="cta" href="#/log/' + ns.w + '/' + ns.d + '">' + label + '<small>Week ' + ns.w + ' / ' + fmtFull(wd(ns.w)[ns.d]) + ' / ' + info.ex.length + ' exercises</small></a>';
+      cta = '<a class="cta" href="#/log/' + ns.w + '/' + ns.d + '">' + label + '<small>Week ' + ns.w + ' / ' + fmtFull(sd(ns.w, ns.d)) + ' / ' + info.ex.length + ' exercises</small></a>';
     }
     var cw = currentWeek();
     return '<p class="kicker">JON\'S 13-WEEK</p><h1 class="hero">IRON BUILD</h1>' +
@@ -128,7 +133,7 @@
     DAYS.forEach(function (d) {
       var info = IB.workout(w, d), done = isDone(w, d);
       h += '<a class="card link" href="#/log/' + w + '/' + d + '"><div class="row"><h3>' + DAYNAME[d] + ' / ' + FOCUS[d] + '</h3><span class="pill ' + (done ? 'done' : '') + '">' + (done ? 'DONE' : 'LOG') + '</span></div>' +
-        '<span class="meta">' + fmtFull(D[d]) + '</span><p class="small mute" style="margin-bottom:0">' + (info.core ? 'Core ' + info.core + ' after lifting.' : 'Leave recovery space before Saturday.') + '</p></a>';
+        '<span class="meta">' + fmtFull(sd(w, d)) + (S.moves && S.moves[w + '.' + d] ? ' / MOVED' : '') + '</span><p class="small mute" style="margin-bottom:0">' + (info.core ? 'Core ' + info.core + ' after lifting.' : 'Leave recovery space before Saturday.') + '</p></a>';
     });
     var cr = w === 13 ? '15-25' : w <= 3 ? '20-25' : w <= 6 ? '25-30' : '30-35';
     h += '<a class="card link" href="#/rules/cardio"><h3>CARDIO / TUESDAY + THURSDAY</h3><span class="meta">' + cr + ' MIN / EASY</span></a>' +
@@ -140,10 +145,15 @@
 
   function vLog(w, day) {
     if (!(w >= 1 && w <= 13) || DAYS.indexOf(day) < 0) return vWeeks();
-    var p = IB.phaseOf(w), info = IB.workout(w, day), D = wd(w)[day], unit = S.unit;
+    var p = IB.phaseOf(w), info = IB.workout(w, day), D = sd(w, day), unit = S.unit;
     var hol = holiday(D);
     var h = '<a class="back" href="#/week/' + w + '">&lt; BACK TO THIS WEEK</a><p class="kicker">WEEK ' + pad(w) + ' / ' + fmtFull(D) + '</p><h1 class="big">' + FOCUS[day] + ' / LOG</h1>' +
       '<p class="small mute">Load: ' + unit + '. Reps: actual completed. For dumbbells, log one dumbbell.</p>';
+    var moved = !!(S.moves && S.moves[w + '.' + day]);
+    h += '<div class="card"><span class="meta">SESSION DATE' + (moved ? ' / MOVED' : '') + '</span><div class="row" style="margin-top:8px;gap:8px">' +
+      '<input type="date" aria-label="Session date" data-act="move" data-w="' + w + '" data-d="' + day + '" value="' + dkey(D) + '">' +
+      (moved ? '<button class="btn" data-act="move-reset" data-w="' + w + '" data-d="' + day + '">RESET</button>' : '') + '</div>' +
+      '<p class="mute small" style="margin:8px 0 0">Missed a day or hitting a holiday? Pick the day you actually train. Your plan and logs stay the same.</p></div>';
     if (hol) h += '<div class="dateflag"><b>' + esc(hol) + '</b> falls on this session. Move it to a day that works (e.g. the day before) and log it here.</div>';
     h += '<a class="btn" href="#/music" style="display:inline-block;margin:6px 0">&#9835; GYM MUSIC</a>';
     h += '<div class="warm"><b>WARM-UP</b>' + esc(info.warm) + '</div>';
@@ -206,6 +216,7 @@
     var h = '<a class="back" href="#/week/' + w + '">&lt; BACK TO THIS WEEK</a><p class="kicker">WEEK ' + pad(w) + ' / SUNDAY RESET / ' + fmt(D.sun) + '</p><h1 class="big">LOG THE WHOLE ATHLETE.</h1>' +
       '<p class="mute small">Quick check-in. Look for better strength, stamina and recovery together.</p>' +
       num('tue', 'TUESDAY CARDIO / MINUTES') + num('thu', 'THURSDAY CARDIO / MINUTES') + num('sat', 'SATURDAY / ACTIVE DANCE MINUTES') +
+      '<label class="lbl" for="c-satnote">SATURDAY DANCE NOTES</label><textarea id="c-satnote" data-act="check" data-f="satnote" placeholder="Energy, feedback from your instructor, what felt good or heavy">' + esc(c.satnote || '') + '</textarea>' +
       scale('energy', 'DANCE ENERGY / 1 LOW - 5 HIGH', 1, 5) + scale('sore', 'LEG SORENESS / 0 NONE - 10 HIGH', 0, 10) +
       bodyBlock + '<label class="lbl" for="c-win">ONE WIN THIS WEEK</label><textarea id="c-win" data-act="check" data-f="win">' + esc(c.win || '') + '</textarea>' +
       '<label class="lbl" for="c-adj">ONE ADJUSTMENT FOR NEXT WEEK</label><textarea id="c-adj" data-act="check" data-f="adj">' + esc(c.adj || '') + '</textarea>' +
@@ -330,12 +341,13 @@
     }
     return null;
   }
+  var DEFAULT_MUSIC = 'https://www.youtube.com/playlist?list=PLB3qQUxqNGYhkI5h3nBo2EcUnVvZAW0fZ';
   function vMusic() {
-    var m = parseMusic(S.music);
+    var cur = S.music || DEFAULT_MUSIC, m = parseMusic(cur);
     var h = '<a class="back" href="#/">&lt; HOME</a><p class="kicker">GYM MUSIC</p><h1 class="big">PRESS PLAY.</h1>' +
       '<p class="mute small">Paste a link to any Spotify, YouTube or YouTube Music playlist. It plays right here, or open it in its own app so the music keeps going while you log sets.</p>' +
-      '<label class="lbl" for="mlink">PLAYLIST LINK</label><input id="mlink" type="url" inputmode="url" autocomplete="off" autocapitalize="off" placeholder="https://open.spotify.com/playlist/..." value="' + esc(S.music) + '">' +
-      '<div class="chip-row" style="margin-top:10px"><button class="btn solid" data-act="music-save">SAVE &amp; LOAD</button>' + (S.music ? '<button class="btn" data-act="music-clear">REMOVE</button>' : '') + '</div>';
+      '<label class="lbl" for="mlink">PLAYLIST LINK</label><input id="mlink" type="url" inputmode="url" autocomplete="off" autocapitalize="off" placeholder="https://open.spotify.com/playlist/..." value="' + esc(cur) + '">' +
+      '<div class="chip-row" style="margin-top:10px"><button class="btn solid" data-act="music-save">SAVE &amp; LOAD</button>' + (S.music ? '<button class="btn" data-act="music-clear">MY GYM PLAYLIST</button>' : '') + '</div>';
     if (m) {
       h += '<iframe class="player ' + m.cls + '" src="' + esc(m.embed) + '" title="' + m.kind + ' player" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>' +
         '<a class="cta" href="' + esc(m.url) + '" target="_blank" rel="noopener">OPEN IN ' + m.kind.toUpperCase() + '<small>Opens the app or site so playback continues in the background.</small></a>';
@@ -470,12 +482,15 @@
     }
   });
   $app.addEventListener('change', function (e) {
-    if (e.target.getAttribute('data-act') === 'fuel-date') { fuelDate = e.target.value || null; route(); }
+    var t = e.target, a = t.getAttribute('data-act');
+    if (a === 'fuel-date') { fuelDate = t.value || null; route(); }
+    else if (a === 'move' && t.value) { S.moves[t.getAttribute('data-w') + '.' + t.getAttribute('data-d')] = t.value; saveNow(); route(); }
   });
   $app.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]'); if (!b) return;
     var act = b.getAttribute('data-act');
     if (act === 'cat') { mealCat = b.getAttribute('data-v'); route(); }
+    else if (act === 'move-reset') { delete S.moves[b.getAttribute('data-w') + '.' + b.getAttribute('data-d')]; saveNow(); route(); }
     else if (act === 'music-save') {
       var v = document.getElementById('mlink').value;
       if (!parseMusic(v)) { toast('Paste a Spotify, YouTube or YouTube Music link.'); return; }
